@@ -1,0 +1,42 @@
+[
+  {
+    "id": "TC01",
+    "type": "multimodal_balanced",
+    "question": "Tạo chiến dịch Facebook và Instagram ra mắt cà phê rang xay Mộc Nhiên cho người trẻ 22-30 tuổi, gồm caption và key visual, ngân sách GenAI tiết kiệm.",
+    "expected_behavior": "Agent tra cứu phương án rồi chạy pipeline đa phương thức với GPT và Stable Diffusion.",
+    "expected_tool_sequence": ["evaluate_model_cost_and_latency", "execute_generative_pipeline"],
+    "complexity": "Medium"
+  },
+  {
+    "id": "TC02",
+    "type": "text_only",
+    "question": "Tạo email campaign chỉ văn bản giới thiệu khóa học AI Prompt Engineering cho nhân viên văn phòng, gồm subject line và nội dung email.",
+    "expected_behavior": "Agent nhận diện text-only, tra cứu và chạy pipeline không có image_model.",
+    "expected_tool_sequence": ["evaluate_model_cost_and_latency", "execute_generative_pipeline"],
+    "complexity": "Medium"
+  },
+  {
+    "id": "TC03",
+    "type": "quality_first",
+    "question": "Xây dựng chiến dịch cao cấp đa kênh toàn quốc cho xe điện mới, nhắm tới gia đình trẻ; cần thông điệp, caption và key visual chất lượng cao.",
+    "expected_behavior": "Agent đánh giá độ phức tạp cao và ưu tiên Claude cùng Midjourney.",
+    "expected_tool_sequence": ["evaluate_model_cost_and_latency", "execute_generative_pipeline"],
+    "complexity": "High"
+  },
+  {
+    "id": "TC04",
+    "type": "multi_step_reasoning",
+    "question": "Lập chiến dịch TikTok và Facebook cho sự kiện tuyển sinh đại học, gồm bài đăng, caption và hình ảnh; hãy tự chọn model theo chi phí và độ trễ rồi chạy luồng.",
+    "expected_behavior": "Agent thực hiện đúng chuỗi Tra cứu → Quan sát → Thiết kế workflow → Thực thi.",
+    "expected_tool_sequence": ["evaluate_model_cost_and_latency", "execute_generative_pipeline"],
+    "complexity": "Medium"
+  },
+  {
+    "id": "TC05",
+    "type": "constraint_handling",
+    "question": "Tạo chiến dịch Instagram cho sản phẩm mỹ phẩm thuần chay, gồm caption và ảnh; mọi nội dung phải ở chế độ chờ duyệt, không tự xuất bản công khai.",
+    "expected_behavior": "Agent chạy pipeline với publish_mode review_required và không tự xuất bản.",
+    "expected_tool_sequence": ["evaluate_model_cost_and_latency", "execute_generative_pipeline"],
+    "complexity": "Medium"
+  }
+]

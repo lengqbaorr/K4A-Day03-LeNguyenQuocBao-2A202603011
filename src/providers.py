@@ -17,6 +17,19 @@ if sys.stdout.encoding != 'utf-8':
 
 load_dotenv()
 
+
+def _sanitize_schema_for_gemini(value):
+    """Loại JSON Schema keyword mà Gemini Function Calling chưa hỗ trợ."""
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_schema_for_gemini(item)
+            for key, item in value.items()
+            if key not in {"additionalProperties", "$schema"}
+        }
+    if isinstance(value, list):
+        return [_sanitize_schema_for_gemini(item) for item in value]
+    return value
+
 class BaseLLMProvider:
     """Interface cơ sở cho các LLM Provider hỗ trợ Native Tool Calling"""
     def generate(self, prompt: str, system_prompt: str = "") -> str:
@@ -27,37 +40,91 @@ class BaseLLMProvider:
 
 
 class MockOfflineProvider(BaseLLMProvider):
-    """Offline Mock Provider dùng để chạy thử mà không tốn API Key"""
+    """Mock Provider cho phép kiểm tra ReAct loop mà không tốn API."""
+
     def __init__(self):
         self.model_name = "Offline-Mock-Model-2026"
 
     def generate(self, prompt: str, system_prompt: str = "") -> str:
-        return f"[Mock Chatbot Response]: Xin chào! Tôi đã nhận được câu hỏi '{prompt}'. (Chế độ Chatbot không có Tool tra cứu dữ liệu thời gian thực)."
+        return (
+            "[Mock Chatbot Response]: Tôi có thể đề xuất ý tưởng nội dung, "
+            "nhưng baseline không thể tra cứu vận hành hoặc kích hoạt pipeline."
+        )
 
     def generate_with_tools(self, prompt: str, tools_schema: List[Dict[str, Any]], system_prompt: str = "") -> Dict[str, Any]:
         prompt_lower = prompt.lower()
-        
-        # Mô phỏng nhận diện intent gọi Tool
-        if "sv2026001" in prompt_lower and "đặt lịch" in prompt_lower:
-            return {
-                "type": "tool_call",
-                "tool_name": "schedule_appointment",
-                "arguments": {"student_id": "SV2026001", "datetime_str": "14:00 15/09/2026", "advisor_name": "PGS.TS Nguyễn Văn A"},
-                "thought": "Người dùng yêu cầu đặt lịch hẹn tư vấn cho sinh viên SV2026001. Tôi sẽ gọi tool schedule_appointment."
-            }
-        elif "sv2026001" in prompt_lower or "tra cứu" in prompt_lower:
-            return {
-                "type": "tool_call",
-                "tool_name": "academic_query",
-                "arguments": {"student_id": "SV2026001"},
-                "thought": "Người dùng muốn tra cứu thông tin học vụ của sinh viên SV2026001. Tôi sẽ gọi tool academic_query."
-            }
-        else:
+        request_lower = prompt_lower.split("quy trình bắt buộc:", 1)[0]
+        last_action = ""
+        if "action step" in prompt_lower:
+            last_action = prompt_lower.rsplit("action step", 1)[-1].splitlines()[0]
+
+        if "execute_generative_pipeline" in last_action:
             return {
                 "type": "text",
-                "content": f"[Mock Agent Response]: Xin chào! Quy chế học vụ VinUni yêu cầu sinh viên tích lũy tối thiểu 120 tín chỉ và duy trì GPA trên 2.0 để tốt nghiệp.",
-                "thought": "Câu hỏi chung về quy chế học vụ, trả lời trực tiếp không cần gọi Tool."
+                "content": (
+                    "## Pipeline sáng tạo đã hoàn tất\n\n"
+                    "MCP đã điều phối các agent theo workflow được chọn. "
+                    "Caption và media mẫu nằm trong phần kết quả bên dưới.\n\n"
+                    "Nội dung hiện ở chế độ **chờ duyệt** và chưa được đăng thật."
+                ),
+                "thought": "Đã có Observation thành công từ pipeline, tôi tổng hợp kết quả."
             }
+
+        if "evaluate_model_cost_and_latency" in last_action:
+            high_complexity = '"task_complexity": "high"' in prompt_lower
+            text_only = '"media_type": "text"' in prompt_lower
+            video_requested = '"media_type": "video"' in prompt_lower
+            return {
+                "type": "tool_call",
+                "tool_name": "execute_generative_pipeline",
+                "arguments": {
+                    "workflow_json": {
+                        "campaign_name": "Chiến dịch GenAI",
+                        "objective": "Tạo nội dung truyền thông theo brief người dùng",
+                        "target_audience": "Khách hàng mục tiêu trong brief",
+                        "channels": ["Email"] if text_only else ["Facebook", "Instagram"],
+                        "text_model": "Claude" if high_complexity else "GPT",
+                        "image_model": (
+                            "none" if text_only
+                            else ("Midjourney" if high_complexity else "Stable Diffusion")
+                        ),
+                        "video_model": "Runway" if video_requested else "none",
+                        "deliverables": (
+                            ["caption"] if text_only
+                            else (
+                                ["caption", "poster", "video", "facebook_post"]
+                                if video_requested
+                                else ["caption", "poster", "facebook_post"]
+                            )
+                        ),
+                        "publish_mode": "review_required"
+                    }
+                },
+                "thought": "Dùng kết quả tra cứu để cấu hình và kích hoạt pipeline."
+            }
+
+        complexity = "high" if any(
+            marker in request_lower
+            for marker in ["cao cấp", "toàn quốc", "đa kênh", "phức tạp"]
+        ) else "medium"
+        if any(marker in request_lower for marker in ["video", "reel", "tiktok"]):
+            media = "video"
+        elif any(
+            marker in request_lower
+            for marker in ["chỉ văn bản", "text-only", "email campaign"]
+        ):
+            media = "text"
+        else:
+            media = "multimodal"
+        return {
+            "type": "tool_call",
+            "tool_name": "evaluate_model_cost_and_latency",
+            "arguments": {
+                "task_complexity": complexity,
+                "media_type": media
+            },
+            "thought": "Cần tra cứu chi phí, độ trễ và hạn ngạch trước khi chọn model."
+        }
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -80,8 +147,11 @@ class GeminiProvider(BaseLLMProvider):
 
     def generate_with_tools(self, prompt: str, tools_schema: List[Dict[str, Any]], system_prompt: str = "") -> Dict[str, Any]:
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
-            print("ℹ️ [Gemini Provider]: Chưa tìm thấy GEMINI_API_KEY hợp lệ. Tự động chuyển sang Mock Offline.")
-            return MockOfflineProvider().generate_with_tools(prompt, tools_schema, system_prompt)
+            return {
+                "type": "text",
+                "content": "[Gemini API Error]: Chưa cấu hình GEMINI_API_KEY hợp lệ.",
+                "thought": "Không thể gọi Gemini vì thiếu thông tin xác thực."
+            }
         
         try:
             from google import genai
@@ -98,7 +168,9 @@ class GeminiProvider(BaseLLMProvider):
                 function_declarations.append({
                     "name": tool["name"],
                     "description": tool.get("description", ""),
-                    "parameters": tool.get("parameters", {})
+                    "parameters": _sanitize_schema_for_gemini(
+                        tool.get("parameters", {})
+                    )
                 })
 
             config = types.GenerateContentConfig(
@@ -131,8 +203,12 @@ class GeminiProvider(BaseLLMProvider):
                 }
 
         except Exception as e:
-            print(f"⚠️ [Gemini API Warning]: Không thể kết nối live API ({str(e)}). Tự động fallback về Mock.")
-            return MockOfflineProvider().generate_with_tools(prompt, tools_schema, system_prompt)
+            print(f"⚠️ [Gemini API Error]: {str(e)}")
+            return {
+                "type": "text",
+                "content": f"[Gemini API Error]: {str(e)}",
+                "thought": "Gemini API từ chối hoặc không thể xử lý request; không fallback sang Mock."
+            }
 
 
 class OpenAIProvider(BaseLLMProvider):
@@ -158,8 +234,11 @@ class OpenAIProvider(BaseLLMProvider):
 
     def generate_with_tools(self, prompt: str, tools_schema: List[Dict[str, Any]], system_prompt: str = "") -> Dict[str, Any]:
         if not self.api_key or self.api_key == "your_openai_api_key_here":
-            print("ℹ️ [OpenAI Provider]: Chưa tìm thấy OPENAI_API_KEY hợp lệ. Tự động chuyển sang Mock Offline.")
-            return MockOfflineProvider().generate_with_tools(prompt, tools_schema, system_prompt)
+            return {
+                "type": "text",
+                "content": "[OpenAI API Error]: Chưa cấu hình OPENAI_API_KEY hợp lệ.",
+                "thought": "Không thể gọi OpenAI vì thiếu thông tin xác thực."
+            }
 
         try:
             from openai import OpenAI
@@ -207,8 +286,12 @@ class OpenAIProvider(BaseLLMProvider):
                     "thought": "OpenAI phản hồi trực tiếp bằng văn bản (không cần gọi công cụ)."
                 }
         except Exception as e:
-            print(f"⚠️ [OpenAI API Warning]: Không thể kết nối live API ({str(e)}). Tự động fallback về Mock.")
-            return MockOfflineProvider().generate_with_tools(prompt, tools_schema, system_prompt)
+            print(f"⚠️ [OpenAI API Error]: {str(e)}")
+            return {
+                "type": "text",
+                "content": f"[OpenAI API Error]: {str(e)}",
+                "thought": "OpenAI API từ chối hoặc không thể xử lý request; không fallback sang Mock."
+            }
 
 
 def get_llm_provider() -> BaseLLMProvider:

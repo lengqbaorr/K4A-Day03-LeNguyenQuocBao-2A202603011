@@ -1,29 +1,184 @@
 [
   {
     "step": 1,
-    "query": "Chào bạn, bạn có thể giới thiệu quy chế học vụ cơ bản của Đại học VinUni không?",
-    "action_type": "FINAL_ANSWER",
-    "thought": "Câu hỏi chung về quy chế học vụ, trả lời trực tiếp không cần gọi Tool.",
-    "output": "[Mock Agent Response]: Xin chào! Quy chế học vụ VinUni yêu cầu sinh viên tích lũy tối thiểu 120 tín chỉ và duy trì GPA trên 2.0 để tốt nghiệp.",
-    "latency_ms": 2845.93
-  },
-  {
-    "step": 1,
-    "query": "Hãy tra cứu thông tin học vụ của sinh viên SV2026001.",
+    "query": "Tạo chiến dịch TikTok và Facebook ra mắt tai nghe thể thao, gồm caption, poster và video dọc 15 giây; tính chi phí rồi mô phỏng đăng bài Facebook.",
     "action_type": "TOOL_EXECUTION",
-    "tool_name": "academic_query",
+    "tool_name": "evaluate_model_cost_and_latency",
     "arguments": {
-      "student_id": "SV2026001"
+      "media_type": "video",
+      "task_complexity": "high"
     },
-    "observation": {},
-    "latency_ms": 799.12
+    "observation": {
+      "status": "SUCCESS",
+      "task_complexity": "high",
+      "media_type": "video",
+      "candidates": [
+        {
+          "model": "GPT",
+          "estimated_cost_usd": 0.24,
+          "estimated_latency_ms": 1800,
+          "api_quota_remaining": 850
+        },
+        {
+          "model": "Claude",
+          "estimated_cost_usd": 0.3,
+          "estimated_latency_ms": 2100,
+          "api_quota_remaining": 620
+        },
+        {
+          "model": "Stable Diffusion",
+          "estimated_cost_usd": 0.07,
+          "estimated_latency_ms": 4200,
+          "api_quota_remaining": 300
+        },
+        {
+          "model": "Midjourney",
+          "estimated_cost_usd": 0.15,
+          "estimated_latency_ms": 9000,
+          "api_quota_remaining": 120
+        },
+        {
+          "model": "Runway",
+          "estimated_cost_usd": 0.8,
+          "estimated_latency_ms": 18000,
+          "api_quota_remaining": 60
+        }
+      ],
+      "recommendation": {
+        "text_model": "Claude",
+        "image_model": "Midjourney",
+        "video_model": "Runway",
+        "selection_strategy": "quality_first"
+      }
+    },
+    "latency_ms": 5574.82
   },
   {
     "step": 2,
-    "query": "Hãy tra cứu thông tin học vụ của sinh viên SV2026001.",
+    "query": "Tạo chiến dịch TikTok và Facebook ra mắt tai nghe thể thao, gồm caption, poster và video dọc 15 giây; tính chi phí rồi mô phỏng đăng bài Facebook.",
+    "action_type": "TOOL_EXECUTION",
+    "tool_name": "execute_generative_pipeline",
+    "arguments": {
+      "workflow_json": {
+        "image_model": "Midjourney",
+        "publish_mode": "review_required",
+        "text_model": "Claude",
+        "deliverables": [
+          "Caption",
+          "Poster",
+          "Video dọc 15s"
+        ],
+        "objective": "Ra mắt sản phẩm tai nghe thể thao mới với caption, poster và video ngắn 15s",
+        "target_audience": "Người tập luyện thể thao, giới trẻ năng động và người yêu công nghệ",
+        "campaign_name": "Ra mắt Tai nghe Thể thao",
+        "video_model": "Runway",
+        "channels": [
+          "TikTok",
+          "Facebook"
+        ]
+      }
+    },
+    "observation": {
+      "status": "SUCCESS",
+      "run_id": "GEN-04209B2E44",
+      "campaign_name": "Ra mắt Tai nghe Thể thao",
+      "pipeline_status": "COMPLETED",
+      "pipeline_steps": [
+        {
+          "step": "generate_caption",
+          "agent": "Copywriter Agent",
+          "model": "Claude",
+          "mcp_action": "generate_text",
+          "estimated_cost_usd": 0.3,
+          "status": "COMPLETED"
+        },
+        {
+          "step": "generate_poster",
+          "agent": "Poster Design Agent",
+          "model": "Midjourney",
+          "mcp_action": "generate_image",
+          "estimated_cost_usd": 0.15,
+          "status": "COMPLETED"
+        },
+        {
+          "step": "generate_video",
+          "agent": "Video Creative Agent",
+          "model": "Runway",
+          "mcp_action": "generate_video",
+          "estimated_cost_usd": 0.8,
+          "status": "COMPLETED"
+        },
+        {
+          "step": "assemble_media",
+          "agent": "Media Assembly Agent",
+          "mcp_action": "merge_caption_and_media",
+          "estimated_cost_usd": 0.01,
+          "status": "COMPLETED"
+        },
+        {
+          "step": "publish_social_post",
+          "agent": "Social Publisher Agent",
+          "mcp_action": "publish_facebook_post",
+          "estimated_cost_usd": 0.0,
+          "mode": "SIMULATION",
+          "status": "READY_FOR_HUMAN_APPROVAL"
+        }
+      ],
+      "artifacts": [
+        {
+          "type": "Caption",
+          "status": "READY"
+        },
+        {
+          "type": "Poster",
+          "status": "READY"
+        },
+        {
+          "type": "Video dọc 15s",
+          "status": "READY"
+        }
+      ],
+      "generated_content": {
+        "caption": "✨ Ra mắt Tai nghe Thể thao\n\nMột trải nghiệm được thiết kế dành cho Người tập luyện thể thao, giới trẻ năng động và người yêu công nghệ. Khám phá ngay hôm nay và chia sẻ khoảnh khắc của bạn!\n\n#CreativeCampaign #AIGenerated #HumanApproved",
+        "poster": {
+          "headline": "Ra mắt Tai nghe Thể thao",
+          "subheadline": "Thiết kế bởi AI · Hoàn thiện bởi con người",
+          "visual_prompt": "Premium advertising poster for Ra mắt Tai nghe Thể thao, target audience: Người tập luyện thể thao, giới trẻ năng động và người yêu công nghệ, editorial composition, studio lighting, brand-safe, social media format 4:5",
+          "format": "1080 × 1350",
+          "simulation": true
+        },
+        "video": {
+          "duration_seconds": 15,
+          "format": "1080 × 1920",
+          "storyboard": [
+            "0–3s: Brand hook và chuyển động mở đầu",
+            "3–10s: Sản phẩm, lợi ích và bối cảnh sử dụng",
+            "10–15s: Call-to-action và logo chiến dịch"
+          ],
+          "simulation": true
+        }
+      },
+      "publication": {
+        "channel": "Facebook",
+        "status": "SIMULATED_READY_TO_PUBLISH",
+        "caption_attached": true,
+        "poster_attached": true,
+        "video_attached": true,
+        "external_side_effect": false,
+        "approval": "review_required"
+      },
+      "pipeline_cost_usd": 1.26,
+      "execution_mode": "SIMULATION",
+      "message": "MCP pipeline demo đã tạo caption và media, sau đó chuẩn bị bài đăng. Không có nội dung nào được đăng thật; cần người dùng duyệt trước."
+    },
+    "latency_ms": 5300.89
+  },
+  {
+    "step": 3,
+    "query": "Tạo chiến dịch TikTok và Facebook ra mắt tai nghe thể thao, gồm caption, poster và video dọc 15 giây; tính chi phí rồi mô phỏng đăng bài Facebook.",
     "action_type": "FINAL_ANSWER",
-    "thought": "Tổng hợp kết quả từ MCP Server thành công.",
-    "output": "Chưa thể trả lời chi tiết do chưa nhận được dữ liệu từ MCP Server (hãy hoàn thành TODO 2.1).",
-    "latency_ms": 10.0
+    "thought": "Gemini phản hồi trực tiếp bằng văn bản (không cần gọi công cụ).",
+    "output": "# BÁO CÁO TỔNG KẾT CHIẾN DỊCH VÀ PIPELINE SẢN XUẤT NỘI DUNG\n\nChiến dịch **\"Ra mắt Tai nghe Thể thao\"** đã hoàn tất việc tạo lập và lắp ghép tài nguyên nội dung thông qua mô phỏng MCP Generative Pipeline.\n\n---\n\n### 1. Model Được Chọn & Lý Do Lựa Chọn\nTheo khuyến nghị tối ưu chất lượng (*quality_first*):\n* **Text Model: Claude**\n  * *Lý do:* Mang lại câu từ cuốn hút, mượt mà và tự nhiên cho đối tượng trẻ năng động & tập luyện thể thao.\n* **Image Model: Midjourney**\n  * *Lý do:* Tạo ấn phẩm Poster đạt chất lượng đồ họa thương mại hàng đầu, chuẩn tỉ lệ 4:5 cho mạng xã hội.\n* **Video Model: Runway**\n  * *Lý do:* Sinh video dọc (9:16) 15 giây chuyên nghiệp, chuyển động mượt mà phù hợp với TikTok/Reels.\n\n---\n\n### 2. Chi Phí Ước Tính, Độ Trễ & Hạn Ngạch Còn Lại\n\n| Hạng mục / Model | Chi phí (USD) | Độ trễ (Latency) | Hạn ngạch API còn lại |\n| :--- | :--- | :--- | :--- |\n| **Claude** (Text) | $0.30 | 2,100 ms | 620 requests |\n| **Midjourney** (Image) | $0.15 | 9,000 ms | 120 requests |\n| **Runway** (Video) | $0.80 | 18,000 ms | 60 requests |\n| **Media Assembly** | $0.01 | - | - |\n| **Tổng chi phí Pipeline** | **$1.26 USD** | - | - |\n\n---\n\n### 3. Thông Tin Vận Hành Pipeline\n\n* **Run ID:** `GEN-04209B2E44`\n* **Trạng thái Pipeline:** `COMPLETED` (Hoàn thành tạo lập)\n* **Chế độ xuất bản (Publish Mode):** `review_required` (Đang chờ con người duyệt)\n* **Lưu ý quan trọng:** Đây hoàn toàn là **MÔ PHỎNG (SIMULATION)**. Chưa có bài viết nào được xuất bản thực tế lên kênh Facebook hay TikTok.\n\n---\n\n### 4. Tài Nguyên Đã Tạo (Artifacts)\n\n* **Caption:**\n  > \"✨ Ra mắt Tai nghe Thể thao\n  > \n  > Một trải nghiệm được thiết kế dành cho Người tập luyện thể thao, giới trẻ năng động và người yêu công nghệ. Khám phá ngay hôm nay và chia sẻ khoảnh khắc của bạn!\n  > \n  > #CreativeCampaign #AIGenerated #HumanApproved\"\n\n* **Poster Design (Midjourney - Format 1080 × 1350):**\n  * Visual Prompt: *Premium advertising poster for Ra mắt Tai nghe Thể thao, editorial composition, studio lighting, brand-safe format 4:5.*\n\n* **Video Dọc 15s (Runway - Format 1080 × 1920):**\n  * Storyboard:\n    * `0–3s`: Hook thương hiệu & chuyển động mở đầu thu hút.\n    * `3–10s`: Cận cảnh sản phẩm, tính năng & bối cảnh tập luyện.\n    * `10–15s`: Call-to-action & logo chiến dịch.\n\n---\n\n### 5. Trạng Thái Bản Nháp Bài Đăng (Facebook / TikTok)\n* **Trạng thái:** `READY_FOR_HUMAN_APPROVAL` / `SIMULATED_READY_TO_PUBLISH`\n* **File đính kèm:** Đã đính kèm đầy đủ Caption, Poster và Video 15s vào bản nháp.\n* **Bước tiếp theo:** Chờ phê duyệt từ Creative Director/Manager trước khi kích hoạt đăng bài thật.",
+    "latency_ms": 9166.5
   }
 ]

@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Chatbot AI Creative Director & Prompt Pipeline Optimizer">
+  <title>Creative Flow AI</title>
+  <style>
+    :root {
+      --ink: #171a1f;
+      --muted: #73777f;
+      --line: #e8e9ec;
+      --soft: #f7f7f8;
+      --blue: #5ab8ef;
+      --blue-soft: #dff2ff;
+      --violet: #7557ff;
+      --violet-soft: #eee9ff;
+      --success: #15966a;
+      --danger: #c84343;
+      --shadow: 0 24px 70px rgba(36, 40, 49, .10);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; color: var(--ink); background: #fff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, textarea { font: inherit; }
+    button { color: inherit; }
+
+    .app { display: grid; grid-template-columns: 276px 1fr; height: 100vh; overflow: hidden; }
+    .sidebar { display: flex; flex-direction: column; min-height: 0; padding: 24px 18px 18px; border-right: 1px solid var(--line); background: #fcfcfd; }
+    .identity { display: flex; align-items: center; gap: 11px; padding: 0 10px 22px; font-weight: 760; }
+    .avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--violet), var(--blue)); color: #fff; font-weight: 850; box-shadow: 0 7px 16px rgba(117,87,255,.22); }
+    .online { width: 8px; height: 8px; margin-left: -17px; margin-top: -29px; border: 2px solid white; border-radius: 50%; background: #2fb277; }
+
+    .nav { display: grid; gap: 5px; }
+    .nav-button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 13px; border: 0; border-radius: 13px; background: transparent; cursor: pointer; text-align: left; font-size: 14px; }
+    .nav-button:hover { background: var(--soft); }
+    .nav-button.active { background: #f0f0f2; font-weight: 720; }
+    .nav-button span:first-child { width: 20px; text-align: center; font-size: 17px; }
+
+    .history { min-height: 0; overflow: auto; margin-top: 22px; padding: 18px 7px 0; border-top: 1px solid var(--line); }
+    .history-label { margin: 0 0 10px 6px; color: #9a9da3; font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .history-item { display: block; width: 100%; padding: 9px 8px; overflow: hidden; border: 0; border-radius: 9px; background: transparent; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; font-size: 12px; color: #4e5259; }
+    .history-item:hover { background: var(--soft); color: var(--ink); }
+
+    .connection { margin-top: auto; padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: white; }
+    .connection-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .connection strong { font-size: 12px; }
+    .connection p { margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #aaa; }
+    .dot.ready { background: var(--success); box-shadow: 0 0 0 4px rgba(21,150,106,.12); }
+    .dot.error { background: var(--danger); }
+
+    .main { position: relative; min-width: 0; overflow: hidden; background: radial-gradient(circle at 50% 0, #fbfdff 0, white 35%); }
+    .topbar { position: absolute; z-index: 5; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; height: 68px; padding: 0 30px; border-bottom: 1px solid rgba(232,233,236,.75); background: rgba(255,255,255,.8); backdrop-filter: blur(16px); }
+    .topbar-title { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 760; }
+    .model-pill { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: white; font: 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .mobile-menu { display: none; border: 0; background: transparent; font-size: 22px; cursor: pointer; }
+
+    .scroll { height: 100%; overflow-y: auto; padding: 96px 28px 150px; scroll-behavior: smooth; }
+    .content { width: min(940px, 100%); margin: 0 auto; }
+
+    .welcome { padding: 35px 0 10px; }
+    .welcome h1 { margin: 0; font-size: clamp(38px, 5vw, 64px); font-weight: 430; line-height: 1.05; letter-spacing: -.045em; }
+    .welcome h1 span { display: inline-block; padding: 4px 12px 7px; border-radius: 14px; color: #246f99; background: var(--blue-soft); font-weight: 680; }
+    .welcome h2 { margin: 8px 0 0; color: #85888d; font-size: clamp(27px, 4vw, 49px); font-weight: 400; letter-spacing: -.04em; }
+    .welcome p { max-width: 660px; margin: 22px 0 0; color: var(--muted); font-size: 15px; line-height: 1.65; }
+
+    .suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 38px; }
+    .suggestion { min-height: 128px; padding: 19px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.85); cursor: pointer; text-align: left; transition: transform .18s, border-color .18s, box-shadow .18s; }
+    .suggestion:hover { transform: translateY(-2px); border-color: #d8d1ff; box-shadow: 0 14px 36px rgba(60,45,130,.08); }
+    .suggestion small { color: var(--violet); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .suggestion strong { display: block; margin-top: 14px; font-size: 16px; line-height: 1.4; }
+    .suggestion p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    .chat { display: none; padding-top: 8px; }
+    .chat.active { display: block; }
+    .message { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 13px; margin-bottom: 26px; animation: appear .25s ease both; }
+    @keyframes appear { from { opacity: 0; transform: translateY(5px); } }
+    .message-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: #f0f0f2; font-size: 15px; }
+    .assistant .message-avatar { color: white; background: linear-gradient(135deg, var(--violet), var(--blue)); }
+    .message-body { min-width: 0; padding-top: 5px; }
+    .message-name { margin-bottom: 8px; font-size: 12px; font-weight: 780; }
+    .message-text { color: #353940; font-size: 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .assistant .message-text { padding: 16px 18px; border: 1px solid var(--line); border-radius: 4px 17px 17px 17px; background: white; box-shadow: 0 10px 30px rgba(30,36,45,.05); }
+    .message.error .message-text { border-color: #f1c8c8; background: #fff8f8; color: #9f3535; }
+    .assistant .message-text h1, .assistant .message-text h2, .assistant .message-text h3 { margin: 14px 0 7px; color: var(--ink); line-height: 1.35; }
+    .assistant .message-text h1 { font-size: 19px; }
+    .assistant .message-text h2 { font-size: 17px; }
+    .assistant .message-text h3 { font-size: 15px; }
+    .assistant .message-text h1:first-child, .assistant .message-text h2:first-child, .assistant .message-text h3:first-child { margin-top: 0; }
+    .assistant .message-text p { margin: 0 0 9px; }
+    .assistant .message-text p:last-child { margin-bottom: 0; }
+    .assistant .message-text ul, .assistant .message-text ol { margin: 7px 0 10px; padding-left: 21px; }
+    .assistant .message-text li { margin: 4px 0; }
+    .assistant .message-text code { padding: 2px 5px; border-radius: 5px; color: #6043db; background: var(--violet-soft); font: 12px ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .assistant .message-text pre { margin: 10px 0; padding: 12px; overflow: auto; border-radius: 10px; color: #eef0f4; background: #20232a; white-space: pre-wrap; }
+    .assistant .message-text pre code { padding: 0; color: inherit; background: transparent; }
+    .assistant .message-text hr { height: 1px; margin: 18px 0; border: 0; background: var(--line); }
+    .markdown-table-wrap { width: 100%; margin: 12px 0 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    .markdown-table { width: 100%; min-width: 560px; border-collapse: collapse; background: white; font-size: 12px; white-space: normal; }
+    .markdown-table th, .markdown-table td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .markdown-table th { color: #555a62; background: #f7f7f9; font-size: 10px; font-weight: 820; letter-spacing: .04em; text-transform: uppercase; }
+    .markdown-table tr:last-child td { border-bottom: 0; }
+    .markdown-table tbody tr:hover { background: #fbfaff; }
+
+    .cost-panel { margin-top: 12px; padding: 14px; border: 1px solid #dcd5ff; border-radius: 14px; background: #faf8ff; }
+    .cost-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 11px; }
+    .cost-head strong { font-size: 12px; }
+    .cost-total { color: var(--violet); font-size: 12px; font-weight: 850; }
+    .cost-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .cost-card { padding: 10px; border: 1px solid var(--line); border-radius: 11px; background: white; }
+    .cost-card > strong { display: block; padding-right: 4px; font-size: 11px; }
+    .cost-card p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .cost-summary { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .cost-chip { padding: 5px 8px; border-radius: 999px; color: #555a62; background: white; border: 1px solid var(--line); font-size: 9px; font-weight: 720; }
+    .demo-notice { margin-top: 12px; padding: 11px 13px; border: 1px solid #f0dc9e; border-radius: 12px; color: #775813; background: #fffaf0; font-size: 10px; line-height: 1.55; }
+
+    .execution-panel { margin-top: 12px; padding: 14px; border: 1px solid #cfe9df; border-radius: 14px; background: #f7fcfa; }
+    .execution-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .execution-head strong { font-size: 12px; }
+    .mode-badge { padding: 5px 8px; border-radius: 999px; color: #0e7653; background: #dcf5e9; font-size: 9px; font-weight: 850; letter-spacing: .04em; }
+    .agent-flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 8px; }
+    .agent-node { position: relative; min-width: 0; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+    .agent-icon { display: grid; place-items: center; width: 28px; height: 28px; margin-bottom: 9px; border-radius: 9px; color: var(--violet); background: var(--violet-soft); font-size: 13px; }
+    .agent-node strong { display: block; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .agent-node p { margin: 5px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+    .agent-done { position: absolute; top: 10px; right: 10px; color: var(--success); font-size: 10px; font-weight: 900; }
+
+    .artifact-section { margin-top: 12px; }
+    .artifact-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 9px; font-size: 12px; }
+    .artifact-title span { color: var(--muted); font-size: 9px; font-weight: 600; }
+    .artifact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .artifact-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: white; }
+    .artifact-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 10px; font-weight: 800; }
+    .artifact-card-head span:last-child { color: var(--success); font-size: 8px; letter-spacing: .04em; }
+    .caption-preview { padding: 14px; color: #41454d; font-size: 11px; line-height: 1.65; white-space: pre-wrap; }
+    .poster-preview { display: flex; min-height: 235px; flex-direction: column; justify-content: flex-end; padding: 22px; color: white; background: radial-gradient(circle at 80% 15%, rgba(255,255,255,.35), transparent 26%), linear-gradient(145deg, #271d58, #7557ff 48%, #54bdec); }
+    .poster-kicker { margin-bottom: auto; font-size: 8px; font-weight: 850; letter-spacing: .18em; text-transform: uppercase; }
+    .poster-title { max-width: 90%; font-size: 23px; font-weight: 850; line-height: 1.05; letter-spacing: -.04em; }
+    .poster-meta { margin-top: 9px; color: rgba(255,255,255,.8); font-size: 9px; }
+    .video-preview { padding: 11px; background: #11131a; }
+    .video-screen { position: relative; display: grid; min-height: 205px; place-items: center; overflow: hidden; border-radius: 10px; color: white; background: radial-gradient(circle at 50% 40%, #8c70ff, #322369 45%, #12131a 75%); }
+    .play { display: grid; place-items: center; width: 48px; height: 48px; padding-left: 3px; border: 1px solid rgba(255,255,255,.5); border-radius: 50%; background: rgba(255,255,255,.18); backdrop-filter: blur(8px); font-size: 18px; }
+    .video-time { position: absolute; right: 10px; bottom: 9px; font-size: 8px; }
+    .storyboard { margin: 0; padding: 10px 12px 12px 28px; color: #d4d6dc; background: #11131a; font-size: 9px; line-height: 1.55; }
+    .facebook-card { grid-column: 1 / -1; }
+    .fb-preview { padding: 13px; }
+    .fb-head { display: flex; align-items: center; gap: 9px; margin-bottom: 11px; }
+    .fb-avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: white; background: linear-gradient(135deg, var(--violet), var(--blue)); font-size: 10px; font-weight: 850; }
+    .fb-head strong { display: block; font-size: 10px; }
+    .fb-head p { margin: 2px 0 0; color: var(--muted); font-size: 8px; }
+    .fb-copy { margin-bottom: 11px; color: #444850; font-size: 10px; line-height: 1.55; white-space: pre-wrap; }
+    .fb-media { display: grid; min-height: 120px; place-items: center; border-radius: 10px; color: white; background: linear-gradient(135deg, #372471, #7557ff, #5ab8ef); font-size: 14px; font-weight: 820; text-align: center; }
+    .fb-status { margin-top: 10px; color: #8a5b18; font-size: 9px; font-weight: 750; }
+
+    .trace { margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fbfbfc; }
+    .trace summary { padding: 12px 14px; cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 720; list-style: none; }
+    .trace summary::-webkit-details-marker { display: none; }
+    .trace summary::before { content: "＋"; margin-right: 8px; color: var(--violet); }
+    .trace[open] summary::before { content: "−"; }
+    .trace-list { padding: 0 14px 13px; }
+    .trace-step { display: grid; grid-template-columns: 25px 1fr auto; align-items: start; gap: 9px; padding: 10px 0; border-top: 1px solid var(--line); }
+    .trace-no { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; color: var(--violet); background: var(--violet-soft); font-size: 10px; font-weight: 850; }
+    .trace-step strong { display: block; font-size: 11px; }
+    .trace-step p { margin: 4px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .trace-status { padding: 4px 7px; border-radius: 999px; color: var(--success); background: #e4f7ef; font-size: 9px; font-weight: 800; }
+
+    .typing { display: flex; gap: 5px; padding: 13px 0; }
+    .typing span { width: 7px; height: 7px; border-radius: 50%; background: #a6a8ad; animation: bounce 1s infinite; }
+    .typing span:nth-child(2) { animation-delay: .14s; }
+    .typing span:nth-child(3) { animation-delay: .28s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+    .composer-wrap { position: absolute; z-index: 7; left: 0; right: 0; bottom: 0; padding: 30px 28px 22px; background: linear-gradient(transparent, white 32%); }
+    .composer { display: flex; align-items: flex-end; gap: 12px; width: min(940px, 100%); margin: 0 auto; padding: 10px 11px 10px 18px; border: 1px solid #dcdde1; border-radius: 24px; background: white; box-shadow: var(--shadow); }
+    textarea { flex: 1; min-height: 45px; max-height: 140px; padding: 12px 0 7px; border: 0; outline: 0; resize: none; color: var(--ink); line-height: 1.45; }
+    textarea::placeholder { color: #9b9da3; }
+    .send { display: grid; flex: 0 0 42px; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 50%; color: white; background: var(--violet); cursor: pointer; font-size: 18px; transition: transform .15s, opacity .15s; }
+    .send:hover { transform: scale(1.04); }
+    .send:disabled { opacity: .35; cursor: wait; transform: none; }
+    .composer-note { width: min(940px,100%); margin: 7px auto 0; color: #aaa; text-align: center; font-size: 10px; }
+
+    @media (max-width: 780px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: fixed; z-index: 20; inset: 0 auto 0 0; width: 276px; transform: translateX(-100%); transition: transform .2s; box-shadow: 20px 0 60px rgba(0,0,0,.12); }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-menu { display: block; }
+      .topbar { padding: 0 18px; }
+      .scroll { padding: 86px 18px 145px; }
+      .composer-wrap { padding-inline: 14px; }
+      .suggestions { grid-template-columns: 1fr; }
+      .suggestion { min-height: 108px; }
+      .cost-grid { grid-template-columns: 1fr; }
+      .artifact-grid { grid-template-columns: 1fr; }
+      .facebook-card { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="identity"><span class="avatar">CF</span><span class="online"></span><span>Creative Flow AI</span></div>
+      <nav class="nav" aria-label="Điều hướng chính">
+        <button class="nav-button active"><span>⌂</span><span>Trang chủ</span></button>
+        <button class="nav-button" id="newChat"><span>＋</span><span>Cuộc trò chuyện mới</span></button>
+        <button class="nav-button"><span>◫</span><span>Pipeline của tôi</span></button>
+        <button class="nav-button"><span>◇</span><span>Model catalog</span></button>
+      </nav>
+      <div class="history" id="history"><p class="history-label">Gần đây</p></div>
+      <div class="connection">
+        <div class="connection-top"><strong>API connection</strong><span class="dot" id="statusDot"></span></div>
+        <p id="statusText">Đang kiểm tra backend…</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title"><button class="mobile-menu" id="menuButton">☰</button><span>✦</span><span>AI Creative Director</span></div>
+        <span class="model-pill" id="modelPill">Connecting…</span>
+      </header>
+
+      <div class="scroll" id="scrollArea">
+        <div class="content">
+          <section class="welcome" id="welcome">
+            <h1><span>Xin chào! 👋</span></h1>
+            <h2>Hôm nay bạn muốn tạo gì?</h2>
+            <p>Mô tả chiến dịch của bạn. Agent sẽ đánh giá độ phức tạp, chọn model phù hợp và kích hoạt pipeline tạo nội dung ở chế độ chờ duyệt.</p>
+            <div class="suggestions">
+              <button class="suggestion" data-prompt="Tạo chiến dịch Facebook và Instagram ra mắt cà phê rang xay Mộc Nhiên cho người trẻ 22–30 tuổi, gồm caption và key visual, ưu tiên chi phí hợp lý."><small>Chiến dịch đa phương tiện</small><strong>Ra mắt thương hiệu cà phê</strong><p>Tối ưu copy và key visual cho social media.</p></button>
+              <button class="suggestion" data-prompt="Tạo email campaign chỉ văn bản giới thiệu khóa học AI Prompt Engineering cho nhân viên văn phòng, gồm subject line và nội dung email."><small>Text only</small><strong>Viết email campaign</strong><p>Không sử dụng model sinh ảnh để tiết kiệm chi phí.</p></button>
+              <button class="suggestion" data-prompt="Xây dựng chiến dịch cao cấp đa kênh toàn quốc cho xe điện mới, nhắm tới gia đình trẻ; cần thông điệp, caption và key visual chất lượng cao."><small>Quality first</small><strong>Ra mắt xe điện cao cấp</strong><p>Ưu tiên chiều sâu nội dung và art direction.</p></button>
+              <button class="suggestion" data-prompt="Tạo chiến dịch Instagram cho mỹ phẩm thuần chay, gồm caption và ảnh; mọi nội dung phải chờ tôi duyệt trước khi xuất bản."><small>Human in the loop</small><strong>Mỹ phẩm thuần chay</strong><p>Tạo bản nháp an toàn, luôn yêu cầu duyệt.</p></button>
+              <button class="suggestion" data-prompt="Tạo chiến dịch TikTok và Facebook ra mắt tai nghe thể thao, gồm caption, poster và video dọc 15 giây; tính chi phí rồi mô phỏng đăng bài Facebook."><small>Video pipeline</small><strong>Video ra mắt sản phẩm</strong><p>Minh họa luồng Runway, poster và social publisher.</p></button>
+            </div>
+          </section>
+          <section class="chat" id="chat" aria-live="polite"></section>
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="composer">
+          <textarea id="prompt" rows="1" placeholder="Nhập creative brief hoặc yêu cầu chiến dịch…"></textarea>
+          <button class="send" id="send" aria-label="Gửi yêu cầu">➜</button>
+        </div>
+        <p class="composer-note">Enter để gửi · Shift + Enter để xuống dòng · Nội dung luôn chờ duyệt trước khi xuất bản</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const ui = {
+      sidebar: document.querySelector("#sidebar"), menu: document.querySelector("#menuButton"),
+      welcome: document.querySelector("#welcome"), chat: document.querySelector("#chat"),
+      prompt: document.querySelector("#prompt"), send: document.querySelector("#send"),
+      scroll: document.querySelector("#scrollArea"), history: document.querySelector("#history"),
+      statusDot: document.querySelector("#statusDot"), statusText: document.querySelector("#statusText"),
+      modelPill: document.querySelector("#modelPill"), newChat: document.querySelector("#newChat")
+    };
+    let busy = false;
+    const recent = JSON.parse(localStorage.getItem("creative-flow-history") || "[]");
+
+    const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+    const scrollBottom = () => requestAnimationFrame(() => { ui.scroll.scrollTop = ui.scroll.scrollHeight; });
+
+    function renderInlineMarkdown(value) {
+      return escapeHtml(value)
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/__([^_]+)__/g, "<strong>$1</strong>")
+        .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    }
+
+    function renderMarkdown(value) {
+      const lines = String(value || "").replace(/\r\n/g, "\n").split("\n");
+      const output = [];
+      let listType = null;
+      let inCode = false;
+      let codeLines = [];
+
+      const closeList = () => {
+        if (listType) output.push(`</${listType}>`);
+        listType = null;
+      };
+
+      const tableCells = line => line.trim()
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map(cell => cell.trim());
+
+      const isTableSeparator = line => {
+        if (!line || !line.includes("|")) return false;
+        const cells = tableCells(line);
+        return cells.length > 1 && cells.every(cell => /^:?-{3,}:?$/.test(cell));
+      };
+
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+        const line = lines[lineIndex];
+        if (/^```/.test(line.trim())) {
+          closeList();
+          if (inCode) {
+            output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+            codeLines = [];
+          }
+          inCode = !inCode;
+          continue;
+        }
+        if (inCode) { codeLines.push(line); continue; }
+
+        if (/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+          closeList();
+          output.push("<hr>");
+          continue;
+        }
+
+        if (line.includes("|") && isTableSeparator(lines[lineIndex + 1])) {
+          closeList();
+          const headers = tableCells(line);
+          const rows = [];
+          lineIndex += 2;
+          while (
+            lineIndex < lines.length
+            && lines[lineIndex].trim()
+            && lines[lineIndex].includes("|")
+          ) {
+            rows.push(tableCells(lines[lineIndex]));
+            lineIndex += 1;
+          }
+          lineIndex -= 1;
+          const headHtml = headers.map(cell => `<th>${renderInlineMarkdown(cell)}</th>`).join("");
+          const bodyHtml = rows.map(row => {
+            const normalized = headers.map((_, index) => row[index] || "");
+            return `<tr>${normalized.map(cell => `<td>${renderInlineMarkdown(cell)}</td>`).join("")}</tr>`;
+          }).join("");
+          output.push(`<div class="markdown-table-wrap"><table class="markdown-table"><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`);
+          continue;
+        }
+
+        const heading = line.match(/^(#{1,3})\s+(.+)$/);
+        if (heading) {
+          closeList();
+          const level = heading[1].length;
+          output.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+          continue;
+        }
+
+        const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+        const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+        if (bullet || numbered) {
+          const nextType = bullet ? "ul" : "ol";
+          if (listType !== nextType) { closeList(); listType = nextType; output.push(`<${nextType}>`); }
+          output.push(`<li>${renderInlineMarkdown((bullet || numbered)[1])}</li>`);
+          continue;
+        }
+
+        if (!line.trim()) { closeList(); continue; }
+        closeList();
+        output.push(`<p>${renderInlineMarkdown(line)}</p>`);
+      }
+      closeList();
+      if (inCode && codeLines.length) output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+      return output.join("");
+    }
+
+    function renderCostSummary(trace) {
+      const evaluation = trace.find(event => event.tool_name === "evaluate_model_cost_and_latency");
+      if (!evaluation?.observation || evaluation.observation.status !== "SUCCESS") return "";
+      const observation = evaluation.observation;
+      const recommendation = observation.recommendation || {};
+      const selectedNames = [recommendation.text_model, recommendation.image_model, recommendation.video_model]
+        .filter(name => name && name !== "none");
+      const selected = (observation.candidates || []).filter(item => selectedNames.includes(item.model));
+      if (!selected.length) return "";
+
+      const totalCost = selected.reduce((sum, item) => sum + Number(item.estimated_cost_usd || 0), 0);
+      const totalLatency = selected.reduce((sum, item) => sum + Number(item.estimated_latency_ms || 0), 0);
+      const cards = selected.map(item => `
+        <div class="cost-card">
+          <strong>${escapeHtml(item.model)}</strong>
+          <p>Chi phí: <b>$${Number(item.estimated_cost_usd).toFixed(2)}</b><br>Độ trễ: <b>${(Number(item.estimated_latency_ms) / 1000).toFixed(1)} giây</b><br>Hạn ngạch: <b>${Number(item.api_quota_remaining).toLocaleString("vi-VN")}</b></p>
+        </div>`).join("");
+      return `<section class="cost-panel"><div class="cost-head"><strong>Chi phí & hiệu năng model</strong><span class="cost-total">Tổng ~$${totalCost.toFixed(2)}</span></div><div class="cost-grid">${cards}</div><div class="cost-summary"><span class="cost-chip">Độ trễ tuần tự ~${(totalLatency / 1000).toFixed(1)} giây</span><span class="cost-chip">Chiến lược: ${escapeHtml(recommendation.selection_strategy || "optimized")}</span><span class="cost-chip">Số liệu mô phỏng cho bài lab</span></div></section>`;
+    }
+
+    function pipelineObservation(trace) {
+      return trace.find(event => event.tool_name === "execute_generative_pipeline")?.observation;
+    }
+
+    function renderDemoNotice(data) {
+      if (!data.fallback_used) return "";
+      return `<div class="demo-notice"><strong>Đang dùng Demo mô phỏng</strong><br>${escapeHtml(data.requested_provider || "Live API")} không khả dụng, nên hệ thống đã chạy workflow mẫu bằng MCP local. Không có ảnh, video hoặc bài đăng nào được gửi tới dịch vụ bên ngoài.</div>`;
+    }
+
+    function renderExecution(trace) {
+      const observation = pipelineObservation(trace);
+      if (!observation || observation.status !== "SUCCESS") return "";
+      const iconByStep = {
+        generate_caption: "Aa", generate_poster: "▧", generate_video: "▶",
+        assemble_media: "◇", publish_social_post: "↗"
+      };
+      const steps = (observation.pipeline_steps || []).map(step => `
+        <div class="agent-node">
+          <span class="agent-done">✓</span>
+          <span class="agent-icon">${escapeHtml(iconByStep[step.step] || "✦")}</span>
+          <strong>${escapeHtml(step.agent || step.step)}</strong>
+          <p>${escapeHtml(step.model || step.mcp_action || "MCP")}<br>Chi phí ~$${Number(step.estimated_cost_usd || 0).toFixed(2)}</p>
+        </div>`).join("");
+      return `<section class="execution-panel"><div class="execution-head"><strong>MCP đang điều phối workflow</strong><span class="mode-badge">${escapeHtml(observation.execution_mode || "SIMULATION")}</span></div><div class="agent-flow">${steps}</div><div class="cost-summary"><span class="cost-chip">Run ID: ${escapeHtml(observation.run_id || "—")}</span><span class="cost-chip">Pipeline ~$${Number(observation.pipeline_cost_usd || 0).toFixed(2)}</span><span class="cost-chip">Không có thao tác đăng thật</span></div></section>`;
+    }
+
+    function renderArtifacts(trace) {
+      const observation = pipelineObservation(trace);
+      if (!observation || observation.status !== "SUCCESS") return "";
+      const content = observation.generated_content || {};
+      const publication = observation.publication || {};
+      const cards = [];
+
+      if (content.caption) {
+        cards.push(`<article class="artifact-card"><div class="artifact-card-head"><span>✎ Caption do AI tạo</span><span>READY</span></div><div class="caption-preview">${escapeHtml(content.caption)}</div></article>`);
+      }
+      if (content.poster) {
+        cards.push(`<article class="artifact-card"><div class="artifact-card-head"><span>▧ Poster preview</span><span>DEMO ASSET</span></div><div class="poster-preview"><span class="poster-kicker">AI CREATIVE CAMPAIGN</span><strong class="poster-title">${escapeHtml(content.poster.headline || observation.campaign_name)}</strong><span class="poster-meta">${escapeHtml(content.poster.subheadline || "AI generated concept")} · ${escapeHtml(content.poster.format || "Social format")}</span></div></article>`);
+      }
+      if (content.video) {
+        const storyboard = (content.video.storyboard || []).map(scene => `<li>${escapeHtml(scene)}</li>`).join("");
+        cards.push(`<article class="artifact-card"><div class="artifact-card-head"><span>▶ Video preview</span><span>DEMO STORYBOARD</span></div><div class="video-preview"><div class="video-screen"><span class="play">▶</span><span class="video-time">${Number(content.video.duration_seconds || 15)} giây · ${escapeHtml(content.video.format || "Vertical")}</span></div></div><ol class="storyboard">${storyboard}</ol></article>`);
+      }
+      if (publication.channel) {
+        const mediaLabel = content.video ? "Video + poster đã được đính kèm" : (content.poster ? (content.poster.headline || "Poster chiến dịch") : "Nội dung văn bản đã sẵn sàng");
+        cards.push(`<article class="artifact-card facebook-card"><div class="artifact-card-head"><span>f Bản xem trước · ${escapeHtml(publication.channel)}</span><span>SIMULATED</span></div><div class="fb-preview"><div class="fb-head"><span class="fb-avatar">CF</span><div><strong>Creative Flow Campaign</strong><p>Vừa xong · Chỉ mình bạn xem bản nháp này</p></div></div><div class="fb-copy">${escapeHtml(content.caption || "Nội dung chiến dịch đã sẵn sàng.")}</div><div class="fb-media">${escapeHtml(mediaLabel)}</div><div class="fb-status">Chờ bạn duyệt · Chưa đăng lên nền tảng thật</div></div></article>`);
+      }
+      if (!cards.length) return "";
+      return `<section class="artifact-section"><h3 class="artifact-title">Kết quả sáng tạo <span>Generated by demo pipeline</span></h3><div class="artifact-grid">${cards.join("")}</div></section>`;
+    }
+
+    function renderHistory() {
+      ui.history.querySelectorAll(".history-item").forEach(item => item.remove());
+      recent.slice(0, 6).forEach(text => {
+        const button = document.createElement("button");
+        button.className = "history-item";
+        button.textContent = text;
+        button.title = text;
+        button.addEventListener("click", () => { ui.prompt.value = text; ui.prompt.focus(); });
+        ui.history.appendChild(button);
+      });
+    }
+
+    async function checkStatus() {
+      try {
+        const response = await fetch("/api/status", { cache: "no-store" });
+        if (!response.ok) throw new Error("Backend unavailable");
+        const data = await response.json();
+        ui.statusDot.className = "dot ready";
+        ui.statusText.textContent = `${data.provider} · ${data.mode === "live" ? "API đã cấu hình" : "Mock offline"}`;
+        ui.modelPill.textContent = data.model;
+      } catch (error) {
+        ui.statusDot.className = "dot error";
+        ui.statusText.textContent = "Chưa kết nối server.py";
+        ui.modelPill.textContent = "Backend offline";
+      }
+    }
+
+    function addMessage(role, text, options = {}) {
+      ui.welcome.style.display = "none";
+      ui.chat.classList.add("active");
+      const article = document.createElement("article");
+      article.className = `message ${role}${options.error ? " error" : ""}`;
+      article.innerHTML = `<div class="message-avatar">${role === "user" ? "B" : "✦"}</div><div class="message-body"><div class="message-name">${role === "user" ? "Bạn" : "Creative Flow AI"}</div><div class="message-text">${escapeHtml(text)}</div></div>`;
+      ui.chat.appendChild(article);
+      scrollBottom();
+      return article;
+    }
+
+    function addTyping() {
+      const article = addMessage("assistant", "");
+      article.dataset.typing = "true";
+      article.querySelector(".message-text").innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+      return article;
+    }
+
+    function renderTrace(trace) {
+      if (!Array.isArray(trace) || !trace.length) return "";
+      const rows = trace.map((event, index) => {
+        const label = event.action_type === "TOOL_EXECUTION" ? event.tool_name : "Final answer";
+        const detail = event.action_type === "TOOL_EXECUTION"
+          ? (event.observation?.message || event.observation?.pipeline_status || event.thought || "Tool completed")
+          : (event.thought || "Đã tổng hợp kết quả");
+        const status = event.observation?.status || "DONE";
+        return `<div class="trace-step"><span class="trace-no">${index + 1}</span><div><strong>${escapeHtml(label)}</strong><p>${escapeHtml(detail)}</p></div><span class="trace-status">${escapeHtml(status)}</span></div>`;
+      }).join("");
+      return `<details class="trace"><summary>Xem quá trình Agent xử lý · ${trace.length} bước</summary><div class="trace-list">${rows}</div></details>`;
+    }
+
+    async function sendMessage(value) {
+      const message = String(value || ui.prompt.value).trim();
+      if (!message || busy) return;
+      busy = true;
+      ui.send.disabled = true;
+      ui.prompt.value = "";
+      ui.prompt.style.height = "auto";
+      addMessage("user", message);
+      const typing = addTyping();
+
+      recent.unshift(message);
+      const unique = [...new Set(recent)].slice(0, 8);
+      recent.splice(0, recent.length, ...unique);
+      localStorage.setItem("creative-flow-history", JSON.stringify(recent));
+      renderHistory();
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Không thể xử lý yêu cầu.");
+        typing.classList.toggle("error", data.api_ok === false);
+        typing.querySelector(".message-text").innerHTML = renderMarkdown(data.answer);
+        typing.querySelector(".message-body").insertAdjacentHTML(
+          "beforeend",
+          renderDemoNotice(data) + renderCostSummary(data.trace) + renderExecution(data.trace) + renderArtifacts(data.trace) + renderTrace(data.trace)
+        );
+        ui.modelPill.textContent = data.model || ui.modelPill.textContent;
+        if (data.fallback_used) {
+          ui.statusDot.className = "dot ready";
+          ui.statusText.textContent = `${data.requested_provider} · Demo fallback`;
+        } else if (data.api_ok === false) {
+          ui.statusDot.className = "dot error";
+          ui.statusText.textContent = `${data.provider} · API bị từ chối`;
+        } else {
+          ui.statusDot.className = "dot ready";
+          ui.statusText.textContent = `${data.provider} · Phản hồi thành công`;
+        }
+      } catch (error) {
+        typing.classList.add("error");
+        typing.querySelector(".message-text").textContent = `${error.message}\n\nHãy chạy: python demo/server.py`;
+      } finally {
+        delete typing.dataset.typing;
+        busy = false;
+        ui.send.disabled = false;
+        ui.prompt.focus();
+        scrollBottom();
+      }
+    }
+
+    document.querySelectorAll(".suggestion").forEach(button => button.addEventListener("click", () => sendMessage(button.dataset.prompt)));
+    ui.send.addEventListener("click", () => sendMessage());
+    ui.prompt.addEventListener("keydown", event => {
+      if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(); }
+    });
+    ui.prompt.addEventListener("input", () => {
+      ui.prompt.style.height = "auto";
+      ui.prompt.style.height = `${Math.min(ui.prompt.scrollHeight, 140)}px`;
+    });
+    ui.newChat.addEventListener("click", () => {
+      ui.chat.innerHTML = "";
+      ui.chat.classList.remove("active");
+      ui.welcome.style.display = "block";
+      ui.prompt.value = "";
+      ui.prompt.focus();
+    });
+    ui.menu.addEventListener("click", () => ui.sidebar.classList.toggle("open"));
+
+    renderHistory();
+    checkStatus();
+  </script>
+</body>
+</html>
