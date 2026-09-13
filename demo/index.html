@@ -389,7 +389,7 @@
 
     function renderDemoNotice(data) {
       if (!data.fallback_used) return "";
-      return `<div class="demo-notice"><strong>Đang dùng Demo mô phỏng</strong><br>${escapeHtml(data.requested_provider || "Live API")} không khả dụng, nên hệ thống đã chạy workflow mẫu bằng MCP local. Không có ảnh, video hoặc bài đăng nào được gửi tới dịch vụ bên ngoài.</div>`;
+      return `<div class="demo-notice"><strong>Đang dùng Demo mô phỏng</strong><br>${escapeHtml(data.live_error || `${data.requested_provider || "Live API"} không khả dụng.`)} Hệ thống đã chạy workflow mẫu bằng MCP local. Không có ảnh, video hoặc bài đăng nào được gửi tới dịch vụ bên ngoài.</div>`;
     }
 
     function renderExecution(trace) {
@@ -452,7 +452,7 @@
         if (!response.ok) throw new Error("Backend unavailable");
         const data = await response.json();
         ui.statusDot.className = "dot ready";
-        ui.statusText.textContent = `${data.provider} · ${data.mode === "live" ? "API đã cấu hình" : "Mock offline"}`;
+        ui.statusText.textContent = `${data.provider} · ${data.mode === "live" ? "Đã có key · chưa kiểm tra quota" : "Mock offline"}`;
         ui.modelPill.textContent = data.model;
       } catch (error) {
         ui.statusDot.className = "dot error";

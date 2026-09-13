@@ -25,6 +25,26 @@ from src.providers import MockOfflineProvider, get_llm_provider  # noqa: E402
 RUN_LOCK = threading.Lock()
 
 
+def friendly_live_error(answer: str) -> str:
+    """Rút gọn lỗi provider để UI giải thích đúng lý do chuyển sang demo."""
+    if "429" in answer or "RESOURCE_EXHAUSTED" in answer:
+        return (
+            "Gemini đã vượt hạn ngạch của API key hiện tại. "
+            "Hãy chờ quota được cấp lại hoặc dùng project có billing."
+        )
+    if "403" in answer or "PERMISSION_DENIED" in answer:
+        return (
+            "Project chứa API key đang bị từ chối quyền truy cập Gemini. "
+            "Hãy tạo key từ project được phép sử dụng Gemini API."
+        )
+    if "WinError 10061" in answer:
+        return (
+            "Không kết nối được tới Gemini vì proxy hoặc kết nối mạng đang từ chối. "
+            "Kiểm tra HTTP_PROXY, HTTPS_PROXY và firewall trước khi chạy lại."
+        )
+    return "Live API trả về lỗi nên hệ thống không thể chạy ReAct bằng provider thật."
+
+
 def provider_info() -> dict[str, Any]:
     provider = get_llm_provider()
     return {
@@ -74,6 +94,7 @@ class ChatHandler(SimpleHTTPRequestHandler):
             provider = get_llm_provider()
             mcp_server = MCPGenerativePipelineServer()
             fallback_used = False
+            live_error = ""
             requested_provider = provider.__class__.__name__
             with RUN_LOCK:
                 trace = run_react_agent(message, provider, mcp_server)
@@ -88,6 +109,7 @@ class ChatHandler(SimpleHTTPRequestHandler):
             ))
             if api_error and not isinstance(provider, MockOfflineProvider):
                 fallback_used = True
+                live_error = friendly_live_error(answer)
                 provider = MockOfflineProvider()
                 with RUN_LOCK:
                     trace = run_react_agent(message, provider, mcp_server)
@@ -104,6 +126,7 @@ class ChatHandler(SimpleHTTPRequestHandler):
                 "api_ok": True,
                 "live_api_ok": not api_error,
                 "fallback_used": fallback_used,
+                "live_error": live_error,
                 "requested_provider": requested_provider,
                 "provider": provider.__class__.__name__,
                 "model": getattr(provider, "model_name", "unknown"),
